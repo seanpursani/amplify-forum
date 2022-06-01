@@ -34,3 +34,10 @@ type Comment
   content: String!
   topic: [Topic] @hasMany
 }
+
+type Subscription {
+  onCreateCommentByTopicId(topicId: String!): Comment
+    @aws_subscribe(mutations: ["createComment"])
+  onDeleteCommentByTopicId(topicId: String!): Comment
+    @aws_subscribe(mutations: ["deleteComment"])
+}

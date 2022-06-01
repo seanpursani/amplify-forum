@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { withAuthenticator } from "@aws-amplify/ui-react";
+import { withAuthenticator, Authenticator } from "@aws-amplify/ui-react";
 import '@aws-amplify/ui-react/styles.css';
 import { useEffect, useState, Fragment } from "react";
 import { Auth } from "aws-amplify";
@@ -87,7 +87,7 @@ function Form({ formData, setFormData, handleSubmit, disableSubmit }) {
               name="title"
               id="title"
               className="block w-full border-gray-300 rounded-md shadow-sm focus\:ring-indigo-500 focus\:border-indigo-500 sm\:text-sm"
-              placeholder="제목"
+              placeholder="..."
               value={formData.title}
               onChange={handleChange}
             />
@@ -175,14 +175,6 @@ function Home() {
   const [topics, setTopics ] = useState([]);
   const [createInProgress, setCreateInProgress] = useState(false);
 
-  async function signOut() {
-    try {
-        await Auth.signOut();
-    } catch (error) {
-        console.log('error signing out: ', error);
-    }
-  }
-
   useEffect(() => {
     checkUser(); // new function call
     fetchTopics();
@@ -212,7 +204,7 @@ function Home() {
       const data = await API.graphql({ query: queries.listTopics });
       setTopics(data.data.listTopics.items);
     } catch (err) {
-       console.log({ err });
+      console.log({ err });
     }
   }
 
@@ -244,7 +236,6 @@ function Home() {
     setCreateInProgress(false);
     }
     
-
   const disableSubmit = createInProgress || formData.title.length === 0;
 
   console.log("topics = ", topics);
@@ -252,7 +243,7 @@ function Home() {
   return (
     <div>
       <Head>
-        <title>Amplify Forum</title>
+        <title>Big Tings Forum</title>
         <link
           rel="icon"
           href="data\:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22></text></svg>"
@@ -264,10 +255,10 @@ function Home() {
           <div className="px-4 py-16 mx-auto max-w-7xl sm\:py-24 sm\:px-6 lg\:px-8">
             <div className="text-center">
               <p className="mt-1 text-4xl font-extrabold text-gray-900 sm\:text-5xl sm\:tracking-tight lg\:text-6xl">
-                Amplify Forum
+                Big Tings Forum
               </p>
               <p className="max-w-xl mx-auto mt-5 text-xl text-gray-500">
-                Welcome to Amplify Forum
+                Welcome to Big Tings Forum
               </p>
               <Grid topics={topics} />
               <div className="mt-10" />
@@ -283,10 +274,15 @@ function Home() {
             />
           </Modal>
         </main>
-        <button className="text-gray-400 bg-transparent bg-white rounded-full hover\:text-gray-500 focus\:outline-none focus\:ring-2 focus\:ring-offset-2 focus\:ring-indigo-500" onClick={signOut}>Sign Out
-        </button>
+        <Authenticator>
+          {({ signOut, user }) => (
+          <div>
+            <h1>Hello {user.username}</h1>
+            <button onClick={signOut}>Sign out</button>
+          </div>
+      )}
+        </Authenticator>
       </div>
-
       <footer></footer>
     </div>
   );
