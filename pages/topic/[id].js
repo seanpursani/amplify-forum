@@ -52,9 +52,9 @@ function CommentList({ commentsItems }) {
                       <div className="text-sm">
                         <span className="font-medium text-gray-900">
                           {commentItem.owner}
-                          <span className="float-right">                              
-                            <DeleteCommentButton comment={commentItem} />
-                          </span>
+                            <span className="float-right">
+                              <DeleteCommentButton comment={commentItem} />
+                            </span>
                         </span>
                       </div>
                       <p className="mt-0.5 text-sm text-gray-500">
@@ -112,21 +112,20 @@ function CommentForm({ formData, setFormData, handleSubmit, disableSubmit }) {
   );
 }
 
-  function DeleteCommentButton({ comment }) {
-    async function deleteComment() {
-      if (!confirm("Are you sure?")) {
-        return;
-      }
-      const deletedComment = await API.graphql({
-        query: mutations.deleteComment,
-        variables: { input: { id: comment.id } },
-      });
-      +
-      alert("Deleted a comment");
-      console.log("deletedComment = ", deletedComment);
+function DeleteCommentButton({ comment }) {
+  async function deleteComment() {
+    if (!confirm("Are you sure?")) {
+      return;
     }
-    return <button onClick={deleteComment}>delete</button>;
+    const deletedComment = await API.graphql({
+      query: mutations.deleteComment,
+      variables: { input: { id: comment.id } },
+    });
+    alert("Deleted a comment");
+    console.log("deletedComment = ", deletedComment);
   }
+  return <button onClick={deleteComment}>delete</button>;
+}
 
 function TopicPage() {
   const router = useRouter();
@@ -140,14 +139,32 @@ function TopicPage() {
   useEffect(() => {
     if (topicId) {
       fetchTopic();
-        const onCreateSubscription = subscribeToOnCreateComment();
-        const onDeleteSubscription = subscribeToOnDeleteComment();
+      const onCreateSubscription = subscribeToOnCreateComment();
+      const onDeleteSubscription = subscribeToOnDeleteComment();
       return () => {
         onCreateSubscription.unsubscribe();
-+       onDeleteSubscription.unsubscribe();
+        onDeleteSubscription.unsubscribe();
       };
     }
   }, [topicId]);
+
+  function subscribeToOnDeleteComment() {
+    const subscription = API.graphql({
+      query: subscriptions.onDeleteCommentByTopicId,
+      variables: {
+        topicId: topicId,
+      },
+    }).subscribe({
+      next: ({ provider, value }) => {
+        console.log({ provider, value });
+        const item = value.data.onDeleteCommentByTopicId;
+        console.log("deleted comment = ", item);
+        setComments((comments) => comments.filter((c) => c.id !== item.id));
+      },
+      error: (error) => console.warn(error),
+    });
+    return subscription;
+  }
 
   function subscribeToOnCreateComment() {
       const subscription = API.graphql({
@@ -161,24 +178,6 @@ function TopicPage() {
           const item = value.data.onCreateCommentByTopicId;
           console.log("new comment = ", item);
           setComments((comments) => [item, ...comments]);
-        },
-        error: (error) => console.warn(error),
-      });
-      return subscription;
-    }
-
-    function subscribeToOnDeleteComment() {
-      const subscription = API.graphql({
-        query: subscriptions.onDeleteCommentByTopicId,
-        variables: {
-          topicId: topicId,
-        },
-      }).subscribe({
-        next: ({ provider, value }) => {
-          console.log({ provider, value });
-          const item = value.data.onDeleteCommentByTopicId;
-          console.log("deleted comment = ", item);
-          setComments((comments) => comments.filter((c) => c.id !== item.id));
         },
         error: (error) => console.warn(error),
       });
